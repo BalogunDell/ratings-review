@@ -21,7 +21,7 @@ const CoreLayout = ({ actionViewIsOpen, structure }) => {
 
       { Template[template] &&
         <main>
-          <Blaze template={template} />
+          {<Blaze template={template} />}
         </main>
       }
 

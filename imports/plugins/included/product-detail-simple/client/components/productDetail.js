@@ -21,13 +21,14 @@ class ProductDetail extends Component {
       <div className="pdp" style={{ position: "relative" }}>
         <div className="container-main pdp-container" itemScope itemType="http://schema.org/Product">
           <div className="row">
-            <Components.Alerts placement="productManagement" />
+            {<Components.Alerts placement="productManagement" />}
             <ReactionLayout
               context={this}
               layoutName={this.props.layout}
               layoutProps={this.props}
             />
           </div>
+          {<Components.Ratings/>}
         </div>
       </div>
     );
