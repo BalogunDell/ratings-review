@@ -10,13 +10,11 @@ import { check } from "meteor/check";
 Meteor.methods({
   saveRatings: function (userObject) {
     check(userObject, Object);
+    if (!this._userId) {
+      return false;
+    }
     userObject.userId = Meteor.userId();
-    userObject.productId = 3;
     Collections.Ratings.insert(userObject);
   }
-});
-
-Meteor.publish("Ratings", function () {
-  return Collections.Ratings.find();
 });
 

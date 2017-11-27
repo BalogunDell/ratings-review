@@ -8,7 +8,7 @@ class Ratings extends Component {
   constructor(props) {
     super(props);
 
-    this.product = { ...this.props };
+    this.productInfo = { ...this.props };
     // define state for component
     this.state = {
       displayForm: false,
@@ -40,15 +40,15 @@ class Ratings extends Component {
       this.state.reviewText,
       this.state.ratingValue);
       console.log(message); //eslint-disable-line
-      console.log(this.product._id); //eslint-disable-line
 
     const ratingsObject = {
       rating: this.state.ratingValue,
       reviewtext: this.state.reviewText,
-      title: this.state.title
+      title: this.state.title,
+      productId: this.productInfo.product._id
     };
 
-    Meteor.call("saveRatings", ratingsObject, (error, reply) => {
+    Meteor.call("saveRatings", ratingsObject, function (error, reply) {
       if (error) {
         console.log(error, "disfdasifjasdigjidgjifgi"); //eslint-disable-line
       } else {
