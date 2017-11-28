@@ -9,7 +9,19 @@ const RatingsForm = ({
   handleUserInput,
   addReviewBtn,
   getStarValue,
-  cancelReview }) => {
+  cancelReview,
+  value,
+  reviews,
+  errorMessage,
+  errorStatus }) => {
+  // Get total rating
+  let totalRating = 0;
+  reviews.forEach(review => {
+    totalRating += parseFloat(review.rating);
+  });
+  //  Calculate total ratings
+  totalRating = totalRating / reviews.length;
+  
   return (
     <div>
       {/* Div for product review and ratings */}
@@ -20,7 +32,7 @@ const RatingsForm = ({
         <div className="rating-holder">
           <div className="row">
             <img src="/resources/ratings.png"/>
-            <h6 className="rating-fig">5.0</h6>
+            <h6 className="rating-fig">{reviews.length === 0 ? "0.0" : totalRating.toFixed(1)}</h6>
           </div>
         </div>
         <div className="row reviewBtn">
@@ -37,28 +49,17 @@ const RatingsForm = ({
               ?
               <div className="row reviewForm">
                 <h4>Add New Review</h4>
+                <ReactStars
+                  count={5}
+                  onChange = {getStarValue}
+                  size= {24}
+                  value={value}
+                />
                 <form onSubmit={saveReview}>
                   {/* Stars for rating */}
                   <div className="form-group stars">
                     <label>Rate this product</label>
                     <br/>
-                  </div>
-
-                  <ReactStars
-                    count={5}
-                    onChange = {getStarValue}
-                    size= {24}
-                  />
-
-                  {/* Title */}
-                  <div className="form-group">
-                    <label>Title</label>
-                    <input type="text"
-                      className="form-control"
-                      placeholder="Review title"
-                      name = "title"
-                      onChange={handleUserInput}
-                    />
                   </div>
 
                   {/* textarea */}
@@ -75,14 +76,21 @@ const RatingsForm = ({
                   </div>
 
                   <div className="form-group">
-                    <input type="submit" value="post"/>
+                    <input type="submit"
+                      className="btn btn-success"
+                      value="Post Review"
+                    />
                     <input
                       type="button"
                       value="cancel"
                       onClick= {cancelReview}
+                      className="btn btn-danger"
                     />
                   </div>
                 </form>
+                <div style={{ color: "red" }}>
+                  { errorStatus ? errorMessage : null }
+                </div>
               </div>
               :
               null
@@ -90,36 +98,26 @@ const RatingsForm = ({
         </div>
         <div className="review-holder">
           <div className="row reviews">
-            <h4>Bad product</h4>
-            <p>Not good at all, don't buy</p>
-            <p className="ratings">
-              <i className="fa fa-star"/>
-              <i className="fa fa-star"/>
-            </p>
-            {Date.now()}
-          </div>
-
-          <div className="row reviews">
-            <h4>Good product</h4>
-            <p>i love this product so much</p>
-            <p className="ratings">
-              <i className="fa fa-star"/>
-              <i className="fa fa-star"/>
-              <i className="fa fa-star"/>
-            </p>
-            {Date.now()}
-          </div>
-
-          <div className="row reviews">
-            <h4>Good product</h4>
-            <p>i love this product so much</p>
-            <p className="ratings">
-              <i className="fa fa-star"/>
-              <i className="fa fa-star"/>
-              <i className="fa fa-star"/>
-              <i className="fa fa-star"/>
-            </p>
-            {Date.now()}
+            {
+              reviews.length === 0
+                ?
+                <h5 style={{ color: "red" }}>This product has not been reviewed. Be the first to review this product</h5>
+                :
+                reviews.map((review, key) => {
+                  return <div key={key}>
+                    <h4>{review.title}</h4>
+                    <p>{review.reviewtext}</p>
+                    <div className="ratings">
+                      <ReactStars
+                        count={5}
+                        size= {10}
+                        value={parseFloat(review.rating)}
+                        edit={false}
+                      />
+                    </div>
+                  </div>;
+                })
+            }
           </div>
         </div>
       </div>
@@ -131,10 +129,14 @@ RatingsForm.propTypes = {
   addReviewBtn: PropTypes.bool,
   cancelReview: PropTypes.func,
   displayForm: PropTypes.bool,
+  errorMessage: PropTypes.string,
+  errorStatus: PropTypes.bool,
   getStarValue: PropTypes.func,
   handleUserInput: PropTypes.func,
+  reviews: PropTypes.array,
   saveReview: PropTypes.func,
-  showReviewForm: PropTypes.func
+  showReviewForm: PropTypes.func,
+  value: PropTypes.number
 };
 
 export default RatingsForm;

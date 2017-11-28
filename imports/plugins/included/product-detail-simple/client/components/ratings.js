@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
 import RatingsForm from "./ratingsForm";
-import { validator } from "./validateReviewInput";
+import { Reaction } from "/client/api";
+import { setTimeout } from "timers";
 
 
 class Ratings extends Component {
@@ -13,9 +14,11 @@ class Ratings extends Component {
     this.state = {
       displayForm: false,
       addReviewBtn: true,
-      title: "",
       reviewText: "",
-      ratingValue: 0
+      ratingValue: 0,
+      errorMessage: "",
+      errorStatus: false,
+      reviews: []
     };
 
     // Bind button to this class
@@ -26,6 +29,48 @@ class Ratings extends Component {
     this.getStarValue = this.getStarValue.bind(this);
   }
 
+  /**
+   * 
+   * @returns { object } updated state
+   * @memberof Ratings
+   */
+  componentWillMount() {
+    if (Reaction.hasPermission("admin") || Meteor.user().emails.length === 0) {
+      this.setState({ displayForm: false, addReviewBtn: false });
+    } // eslint-disable-line
+
+    Meteor.call("fetchRatings", this.productInfo.product._id, (error, response) => {
+      if (error) {
+        console.log(error);
+      } else {
+        this.setState({ reviews: response });
+      }
+    });
+
+    Meteor.call("fetchOrders", this.productInfo.product._id, (error, result) => {
+      if (error) {
+        console.log(error);
+      } else {
+        if (result.length === 0) {
+          this.setState({ addReviewBtn: false });
+        } else {
+          result[0].items.forEach((item) => {
+            if (item.productId === this.productInfo.product._id) {
+              this.setState({ addReviewBtn: true });
+            } else {
+              this.setState({ addReviewBtn: false });
+            }
+          });
+        }
+      }
+    });
+  }
+
+  /**
+   * 
+   * @returns updated state
+   * @memberof Ratings
+   */
   showReviewForm() {
     this.setState({ displayForm: true, addReviewBtn: false });
   }
@@ -36,25 +81,62 @@ class Ratings extends Component {
    */
   saveReview(event) {
     event.preventDefault();
-    const message = validator(this.state.title,
-      this.state.reviewText,
-      this.state.ratingValue);
-      console.log(message); //eslint-disable-line
-
-    const ratingsObject = {
-      rating: this.state.ratingValue,
-      reviewtext: this.state.reviewText,
-      title: this.state.title,
-      productId: this.productInfo.product._id
-    };
-
-    Meteor.call("saveRatings", ratingsObject, function (error, reply) {
-      if (error) {
-        console.log(error, "disfdasifjasdigjidgjifgi"); //eslint-disable-line
-      } else {
-        console.log(reply, "meeeeeeeeeee"); //eslint-disable-line
-      }
+    console.log(Meteor.user());
+    this.setState({
+      errorStatus: false,
+      errorMessage: "",
+      canRateProduct: false
     });
+
+    if ((this.state.ratingValue) === 0 && (!this.state.reviewText)) {
+      this.setState({ errorStatus: true, errorMessage: "Please rate the product or enter a review" });
+    } else if ((this.state.ratingValue) > 0 && (!this.state.reviewText)) {
+      // Compose ratings and review object using details from users
+      const ratingsObject = {
+        rating: this.state.ratingValue,
+        reviewtext: "No review yet",
+        title: Meteor.user().name,
+        productId: this.productInfo.product._id
+      };
+
+
+      //  Save ratings to the database
+      Meteor.call("saveRatings", ratingsObject, (error, reply) => {
+        if (error) {
+          console.log(error); //eslint-disable-line
+        } else {
+          this.setState({
+            reviews: reply
+          });
+          setTimeout(() => {
+            this.cancelReview();
+          }, 1000);
+        }
+      });
+    } else {
+      // Compose ratings and review object using details from users
+      const ratingsObject = {
+        rating: this.state.ratingValue,
+        reviewtext: this.state.reviewText,
+        title: Meteor.user().name,
+        productId: this.productInfo.product._id
+      };
+
+      //  Save ratings to the database
+      Meteor.call("saveRatings", ratingsObject, (error, reply) => {
+        if (error) {
+          console.log(error); //eslint-disable-line
+        } else {
+          this.setState({
+            reviews: reply,
+            reviewText: "",
+            ratingValue: 0 });
+        }
+        setTimeout(() => {
+          this.cancelReview();
+        }, 1000);
+      });
+    }
   }
 
   /**
@@ -65,8 +147,10 @@ class Ratings extends Component {
     this.setState({
       displayForm: false,
       addReviewBtn: true,
-      title: "",
-      reviewText: "" });
+      errorStatus: false,
+      errorMessage: "",
+      reviewText: "",
+      ratingValue: 0 });
   }
   /**
    * @param { object } event event on target element
@@ -74,7 +158,10 @@ class Ratings extends Component {
    */
   handleUserInput(event) {
     event.preventDefault();
-    this.setState({ [ event.target.name ]: event.target.value });
+    this.setState({
+      [ event.target.name ]: event.target.value,
+      errorMessage: "",
+      errorStatus: false });
   }
 
   /**
@@ -83,7 +170,6 @@ class Ratings extends Component {
    */
   getStarValue(event) {
     this.setState({ ratingValue: event }); //eslint-disable-line
-    console.log(event); //eslint-disable-line
   }
 
   render() {
@@ -98,6 +184,10 @@ class Ratings extends Component {
             addReviewBtn = {this.state.addReviewBtn}
             getStarValue = {this.getStarValue}
             cancelReview = {this.cancelReview}
+            value= {this.state.ratingValue}
+            reviews = {this.state.reviews}
+            errorStatus = {this.state.errorStatus}
+            errorMessage = {this.state.errorMessage}
           />
         </div>
       </div>

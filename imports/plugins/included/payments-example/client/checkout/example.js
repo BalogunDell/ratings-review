@@ -48,14 +48,8 @@ AutoForm.addHooks("example-payment-form", {
     const template = this.template;
     hidePaymentAlert();
     const form = {
-      name: doc.payerName,
-      number: doc.cardNumber,
-      expireMonth: doc.expireMonth,
-      expireYear: doc.expireYear,
-      cvv2: doc.cvv,
-      type: Reaction.getCardType(doc.cardNumber)
+      name: doc.payerName
     };
-    const storedCard = form.type.charAt(0).toUpperCase() + form.type.slice(1) + " " + doc.cardNumber.slice(-4);
     Meteor.subscribe("Packages", Reaction.getShopId());
     const packageData = Packages.findOne({
       name: "example-paymentmethod",
@@ -65,6 +59,8 @@ AutoForm.addHooks("example-payment-form", {
       total: Cart.findOne().getTotal(),
       currency: Shops.findOne().currency
     }, function (error, transaction) {
+      console.log(error);
+      console.log(transaction);
       submitting = false;
       let paymentMethod;
       if (error) {
@@ -77,7 +73,7 @@ AutoForm.addHooks("example-payment-form", {
             processor: "Example",
             paymentPackageId: packageData._id,
             paymentSettingsKey: packageData.registry[0].settingsKey,
-            storedCard: storedCard,
+            storedCard: "",
             method: "credit",
             transactionId: transaction.transactionId,
             riskLevel: transaction.riskLevel,
